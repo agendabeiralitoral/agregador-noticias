@@ -1,4 +1,3 @@
-import base64
 import urllib.parse
 import feedparser
 import streamlit as st
@@ -11,30 +10,17 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-
-# Função para converter a imagem local em base64 para o cabeçalho fixo
-@st.cache_data
-def get_base64_image(image_path):
-    try:
-        with open(image_path, "rb") as img_file:
-            return base64.b64encode(img_file.read()).decode()
-    except Exception:
-        return None
-
-
-img_base64 = get_base64_image("logo.png")
-
 # --- MELHORIAS DE DESIGN E CABEÇALHO FIXO (CSS) ---
 st.markdown(
-    f"""
+    """
     <style>
     /* Estilo global */
-    .main {{
+    .main {
         background-color: #f8f9fa;
-    }}
+    }
     
     /* Cabeçalho Fixo no Topo */
-    .sticky-header {{
+    .sticky-header {
         position: sticky;
         top: 0;
         background-color: #f8f9fa;
@@ -43,10 +29,19 @@ st.markdown(
         padding-bottom: 10px;
         border-bottom: 1px solid #e2e8f0;
         margin-bottom: 20px;
-    }}
+    }
+    
+    /* Título Principal no Cabeçalho */
+    .header-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: #1e293b;
+        margin: 0;
+        letter-spacing: -0.5px;
+    }
     
     /* Cartões de notícias modernos */
-    .news-card {{
+    .news-card {
         background-color: #ffffff;
         padding: 20px;
         border-radius: 10px;
@@ -54,29 +49,29 @@ st.markdown(
         box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         margin-bottom: 20px;
         transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }}
-    .news-card:hover {{
+    }
+    .news-card:hover {
         box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         border-color: #cbd5e1;
-    }}
+    }
     
     /* Títulos dos artigos */
-    .news-title {{
+    .news-title {
         font-size: 1.25rem;
         font-weight: 700;
         color: #1e293b;
         margin-bottom: 8px;
-    }}
+    }
     
     /* Metadados */
-    .news-meta {{
+    .news-meta {
         font-size: 0.85rem;
         color: #64748b;
         margin-bottom: 12px;
-    }}
+    }
     
     /* Botão minimalista apenas com o logotipo do Facebook */
-    .fb-icon-btn {{
+    .fb-icon-btn {
         background-color: #1877F2;
         color: white;
         width: 36px;
@@ -90,18 +85,18 @@ st.markdown(
         font-size: 1.1rem;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         transition: background-color 0.2s ease, transform 0.2s ease;
-    }}
-    .fb-icon-btn:hover {{
+    }
+    .fb-icon-btn:hover {
         background-color: #166fe5;
         color: white;
         transform: scale(1.05);
-    }}
+    }
     
     /* Ajustes na barra lateral */
-    [data-testid="stSidebar"] {{
+    [data-testid="stSidebar"] {
         background-color: #f1f5f9;
         border-right: 1px solid #e2e8f0;
-    }}
+    }
     </style>
 """,
     unsafe_allow_html=True,
@@ -263,18 +258,15 @@ for nome_fonte, url_fonte in st.session_state.fontes_regionais.items():
     except Exception:
         continue
 
-# --- CABEÇALHO FIXO NA PÁGINA PRINCIPAL ---
+# --- CABEÇALHO FIXO COM TEXTO NA PÁGINA PRINCIPAL ---
 st.markdown('<div class="sticky-header">', unsafe_allow_html=True)
 
-col_logo, col_info = st.columns([1.5, 2.5])
-with col_logo:
-    if img_base64:
-        st.markdown(
-            f'<img src="data:image/png;base64,{img_base64}" style="width: 220px;">',
-            unsafe_allow_html=True,
-        )
-    else:
-        st.markdown("### agenda beiralitoral")
+col_title, col_info = st.columns([2, 2])
+with col_title:
+    st.markdown(
+        '<h1 class="header-title">Agenda Beira Litoral</h1>',
+        unsafe_allow_html=True,
+    )
 
 with col_info:
     st.markdown(
