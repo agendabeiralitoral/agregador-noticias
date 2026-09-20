@@ -70,28 +70,25 @@ st.markdown(
         margin-bottom: 12px;
     }
     
-    /* Botão minimalista apenas com o logotipo do Facebook */
-    .fb-icon-btn {
+    /* Estilo para o botão de partilha do Facebook */
+    .fb-link-btn {
         background-color: #1877F2;
-        color: white;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
+        color: white !important;
+        padding: 6px 14px;
+        border-radius: 20px;
         text-decoration: none;
         font-weight: bold;
-        font-size: 1.1rem;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         transition: background-color 0.2s ease, transform 0.2s ease;
-        border: none;
-        cursor: pointer;
     }
-    .fb-icon-btn:hover {
+    .fb-link-btn:hover {
         background-color: #166fe5;
-        color: white;
         transform: scale(1.05);
+        color: white !important;
     }
     
     /* Ajustes na barra lateral */
@@ -240,7 +237,6 @@ municipio_selecionado = st.sidebar.selectbox(
 categoria_selecionada = st.sidebar.selectbox(
     "Escolha a Categoria:", ["Todas"] + sorted(list(categorias_keywords.keys()))
 )
-# Limite máximo aumentado para 100
 limite = st.sidebar.slider("Número máximo de notícias a exibir:", 3, 100, 10)
 
 
@@ -316,9 +312,9 @@ if todas_as_noticias:
             f"Encontradas {len(noticias_finais)} notícias correspondentes."
         )
 
-    # Renderização dos cartões de notícias até ao limite escolhido (máx. 100)
+    # Renderização dos cartões de notícias com links de partilha seguros e funcionais
     for i, entrada in enumerate(noticias_finais[:limite]):
-        titulo = entrada.get("title", "Sem título").replace('"', "'")
+        titulo = entrada.get("title", "Sem título")
         link = entrada.get("link", "#")
         data = entrada.get("published", "Data indisponível")
         resumo = entrada.get("summary", "Sem resumo disponível.")
@@ -326,20 +322,17 @@ if todas_as_noticias:
 
         link_encoded = urllib.parse.quote(link)
         fb_share_url = f"https://www.facebook.com/sharer/sharer.php?u={link_encoded}"
-        
-        texto_copiar = f"{titulo} - {link} #agendabeiralitoral"
 
         cartao_html = f"""
         <div class="news-card">
             <div class="news-title">{titulo}</div>
             <div class="news-meta">📰 <b>{origem}</b> &nbsp;|&nbsp; 📅 {data}</div>
             <div style="color: #475569; font-size: 0.95rem; margin-bottom: 15px;">{resumo}</div>
-            <div style="display: flex; gap: 20px; align-items: center;">
+            <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
                 <a href="{link}" target="_blank" style="color: #2563eb; text-decoration: none; font-weight: 600; font-size: 0.9rem;">🔗 Ler Artigo Completo</a>
-                <button class="fb-icon-btn" onclick="
-                    navigator.clipboard.writeText(`{texto_copiar}`);
-                    window.open('{fb_share_url}', '_blank');
-                " title="Partilhar no Facebook (A hashtag é copiada para colar automaticamente)">f</button>
+                <a href="{fb_share_url}" target="_blank" class="fb-link-btn">
+                    f &nbsp; Partilhar no Facebook
+                </a>
             </div>
         </div>
         """
