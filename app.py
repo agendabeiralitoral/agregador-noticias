@@ -11,7 +11,7 @@ st.set_page_config(
 try:
     st.image("logo.png", use_container_width=True)
 except Exception:
-    st.title("agenda beira litoral")
+    st.title("agenda beiralitoral")
     st.warning(
         "⚠️ Coloque a imagem do logotipo com o nome 'logo.png' na pasta do repositório."
     )
@@ -162,13 +162,18 @@ def carregar_rss(url):
     return feedparser.parse(url)
 
 
-# --- RECOLHA AUTOMÁTICA DE TODAS AS FONTES ---
+# --- RECOLHA AUTOMÁTICA DE TODAS AS FONTES (COM PROTEÇÃO) ---
 todas_as_noticias = []
 for nome_fonte, url_fonte in st.session_state.fontes_regionais.items():
-    feed = carregar_rss(url_fonte)
-    for entrada in feed.entries:
-        entrada["fonte_origem"] = nome_fonte
-        todas_as_noticias.append(entrada)
+    try:
+        feed = carregar_rss(url_fonte)
+        if feed and hasattr(feed, "entries"):
+            for entrada in feed.entries:
+                entrada["fonte_origem"] = nome_fonte
+                todas_as_noticias.append(entrada)
+    except Exception:
+        # Se uma fonte falhar, ignora-a e continua a carregar as outras
+        continue
 
 # --- CORPO DA PÁGINA ---
 st.subheader(
