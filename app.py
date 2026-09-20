@@ -8,16 +8,12 @@ st.set_page_config(
 )
 
 # --- LOGOTIPO NO TOPO ---
-# Certifique-se de que o ficheiro com o logotipo está guardado como 'logo.png' na pasta do repositório
 try:
-    st.image(
-        "logo.png", use_container_width=True
-    )  # Exibe o logotipo a ocupar a largura principal
+    st.image("logo.png", use_container_width=True)
 except Exception:
-    # Fallback caso o ficheiro ainda não tenha sido enviado para o GitHub
     st.title("agenda beiralitoral")
     st.warning(
-        "⚠️ Coloque a imagem do logotipo com o nome 'logo.png' na pasta do repositório para o visualizar aqui."
+        "⚠️ Coloque a imagem do logotipo com o nome 'logo.png' na pasta do repositório."
     )
 
 st.markdown("---")
@@ -123,6 +119,21 @@ if "fontes_regionais" not in st.session_state:
 # --- BARRA LATERAL ---
 st.sidebar.header("⚙️ Gestão de Fontes e Filtros")
 
+# 1. Secção para CONSULTAR e GERIR as fontes configuradas
+with st.sidebar.expander("📋 Consultar Fontes Configuradas"):
+    if st.session_state.fontes_regionais:
+        for nome, url in list(st.session_state.fontes_regionais.items()):
+            st.markdown(f"**{nome}**")
+            st.code(url, language="text")
+            # Botão opcional para remover alguma fonte se desejar
+            if st.button(f"Remover '{nome}'", key=f"btn_rem_{nome}"):
+                del st.session_state.fontes_regionais[nome]
+                st.rerun()
+            st.markdown("---")
+    else:
+        st.info("Não existem fontes configuradas.")
+
+# 2. Secção para ADICIONAR nova fonte RSS
 with st.sidebar.expander("➕ Adicionar Nova Fonte RSS"):
     novo_nome = st.text_input("Nome da Fonte (ex: Jornal Local)")
     novo_url = st.text_input("URL do Feed RSS (ex: https://...)")
@@ -131,6 +142,7 @@ with st.sidebar.expander("➕ Adicionar Nova Fonte RSS"):
         if novo_nome and novo_url:
             st.session_state.fontes_regionais[novo_nome] = novo_url
             st.success(f"Fonte '{novo_nome}' adicionada com sucesso!")
+            st.rerun()
         else:
             st.warning("Por favor, preencha o nome e o URL.")
 
@@ -208,25 +220,25 @@ if todas_as_noticias:
         resumo = entrada.get("summary", "Sem resumo disponível.")
         origem = entrada.get("fonte_origem", "Fonte desconhecida")
 
-        with st.container():
-            st.subheader(titulo)
-            st.caption(
-                f"📰 **Origem:** {origem} &nbsp;|&nbsp; 📅 **Publicado a:** {data}"
-            )
-            st.write(resumo, unsafe_allow_html=True)
+with st.container():
+    st.subheader(titulo)
+    st.caption(
+        f"📰 **Origem:** {origem} &nbsp;|&nbsp; 📅 **Publicado a:** {data}"
+    )
+    st.write(resumo, unsafe_allow_html=True)
 
-            link_encoded = urllib.parse.quote(link)
-            fb_share_url = f"https://www.facebook.com/sharer/sharer.php?u={link_encoded}"
+    link_encoded = urllib.parse.quote(link)
+    fb_share_url = f"https://www.facebook.com/sharer/sharer.php?u={link_encoded}"
 
-            col1, col2, _ = st.columns([2, 2, 6])
-            with col1:
-                st.markdown(f"[🔗 Ler Artigo Completo]({link})")
-            with col2:
-                st.markdown(
-                    f'<a href="{fb_share_url}" target="_blank" style="text-decoration:none;"><button style="background-color:#1877F2; color:white; border:none; padding:8px 16px; border-radius:4px; font-weight:bold; cursor:pointer;">📘 Partilhar no Facebook</button></a>',
-                    unsafe_allow_html=True,
-                )
+    col1, col2, _ = st.columns([2, 2, 6])
+    with col1:
+        st.markdown(f"[🔗 Ler Artigo Completo]({link})")
+    with col2:
+        st.markdown(
+            f'<a href="{fb_share_url}" target="_blank" style="text-decoration:none;"><button style="background-color:#1877F2; color:white; border:none; padding:8px 16px; border-radius:4px; font-weight:bold; cursor:pointer;">📘 Partilhar no Facebook</button></a>',
+            unsafe_allow_html=True,
+        )
 
-            st.markdown("---")
+    st.markdown("---")
 else:
     st.warning("Não foi possível carregar notícias de nenhuma das fontes ativas.")
