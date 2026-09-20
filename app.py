@@ -1,3 +1,4 @@
+import base64
 import urllib.parse
 import feedparser
 import streamlit as st
@@ -10,17 +11,42 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# --- MELHORIAS DE DESIGN (CSS CUSTOMIZADO) ---
+
+# Função para converter a imagem local em base64 para o cabeçalho fixo
+@st.cache_data
+def get_base64_image(image_path):
+    try:
+        with open(image_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
+    except Exception:
+        return None
+
+
+img_base64 = get_base64_image("logo.png")
+
+# --- MELHORIAS DE DESIGN E CABEÇALHO FIXO (CSS) ---
 st.markdown(
-    """
+    f"""
     <style>
-    /* Estilo global e fontes */
-    .main {
+    /* Estilo global */
+    .main {{
         background-color: #f8f9fa;
-    }
+    }}
+    
+    /* Cabeçalho Fixo no Topo */
+    .sticky-header {{
+        position: sticky;
+        top: 0;
+        background-color: #f8f9fa;
+        z-index: 99999;
+        padding-top: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e2e8f0;
+        margin-bottom: 20px;
+    }}
     
     /* Cartões de notícias modernos */
-    .news-card {
+    .news-card {{
         background-color: #ffffff;
         padding: 20px;
         border-radius: 10px;
@@ -28,69 +54,58 @@ st.markdown(
         box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         margin-bottom: 20px;
         transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .news-card:hover {
+    }}
+    .news-card:hover {{
         box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         border-color: #cbd5e1;
-    }
+    }}
     
     /* Títulos dos artigos */
-    .news-title {
+    .news-title {{
         font-size: 1.25rem;
         font-weight: 700;
         color: #1e293b;
         margin-bottom: 8px;
-    }
+    }}
     
     /* Metadados */
-    .news-meta {
+    .news-meta {{
         font-size: 0.85rem;
         color: #64748b;
         margin-bottom: 12px;
-    }
+    }}
     
-    /* Botão personalizado do Facebook */
-    .fb-btn {
+    /* Botão minimalista apenas com o logotipo do Facebook */
+    .fb-icon-btn {{
         background-color: #1877F2;
         color: white;
-        padding: 6px 14px;
-        border-radius: 6px;
-        font-weight: 600;
-        font-size: 0.85rem;
-        text-decoration: none;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        border: none;
-        cursor: pointer;
-    }
-    .fb-btn:hover {
+        justify-content: center;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 1.1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: background-color 0.2s ease, transform 0.2s ease;
+    }}
+    .fb-icon-btn:hover {{
         background-color: #166fe5;
         color: white;
-    }
+        transform: scale(1.05);
+    }}
     
     /* Ajustes na barra lateral */
-    [data-testid="stSidebar"] {
+    [data-testid="stSidebar"] {{
         background-color: #f1f5f9;
         border-right: 1px solid #e2e8f0;
-    }
+    }}
     </style>
 """,
     unsafe_allow_html=True,
 )
-
-# --- LOGOTIPO NO TOPO ---
-col_logo1, col_logo2, col_logo3 = st.columns([1, 4, 1])
-with col_logo2:
-    try:
-        st.image("logo.png", use_container_width=True)
-    except Exception:
-        st.title("agenda beiralitoral")
-        st.warning(
-            "⚠️ Coloque a imagem do logotipo com o nome 'logo.png' na pasta do repositório."
-        )
-
-st.markdown("<br>", unsafe_allow_html=True)
 
 # 1. Lista base de Municípios
 municipios_lista = [
@@ -195,7 +210,6 @@ st.sidebar.markdown(
     "### 🎛️ Painel de Controlo", help="Filtros e Gestão de Fontes"
 )
 
-# 1. Secção para CONSULTAR e GERIR as fontes configuradas
 with st.sidebar.expander("📋 Fontes RSS Configuradas"):
     if st.session_state.fontes_regionais:
         for nome, url in list(st.session_state.fontes_regionais.items()):
@@ -208,7 +222,6 @@ with st.sidebar.expander("📋 Fontes RSS Configuradas"):
     else:
         st.info("Não existem fontes configuradas.")
 
-# 2. Secção para ADICIONAR nova fonte RSS
 with st.sidebar.expander("➕ Adicionar Nova Fonte RSS"):
     novo_nome = st.text_input("Nome da Fonte (ex: Jornal Local)")
     novo_url = st.text_input("URL do Feed RSS (ex: https://...)")
@@ -238,7 +251,7 @@ def carregar_rss(url):
     return feedparser.parse(url)
 
 
-# --- RECOLHA AUTOMÁTICA DE TODAS AS FONTES (COM PROTEÇÃO) ---
+# --- RECOLHA AUTOMÁTICA DE TODAS AS FONTES ---
 todas_as_noticias = []
 for nome_fonte, url_fonte in st.session_state.fontes_regionais.items():
     try:
@@ -250,21 +263,31 @@ for nome_fonte, url_fonte in st.session_state.fontes_regionais.items():
     except Exception:
         continue
 
-# --- CORPO DA PÁGINA ---
-col_info1, col_info2 = st.columns([3, 1])
-with col_info1:
+# --- CABEÇALHO FIXO NA PÁGINA PRINCIPAL ---
+st.markdown('<div class="sticky-header">', unsafe_allow_html=True)
+
+col_logo, col_info = st.columns([1.5, 2.5])
+with col_logo:
+    if img_base64:
+        st.markdown(
+            f'<img src="data:image/png;base64,{img_base64}" style="width: 220px;">',
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown("### agenda beiralitoral")
+
+with col_info:
     st.markdown(
-        f"#### Filtro ativo: <span style='color:#2563eb;'>{municipio_selecionado}</span> | Categoria: <span style='color:#2563eb;'>{categoria_selecionada}</span>",
-        unsafe_allow_html=True,
-    )
-with col_info2:
-    st.markdown(
-        f"<div style='text-align: right; color: #64748b; font-size: 0.9rem;'>Fontes ativas: <b>{len(st.session_state.fontes_regionais)}</b></div>",
+        f"<div style='text-align: right; padding-top: 10px; font-size: 0.95rem; color: #475569;'>"
+        f"Concelho: <b>{municipio_selecionado}</b> | Categoria: <b>{categoria_selecionada}</b><br>"
+        f"Fontes ativas: <b>{len(st.session_state.fontes_regionais)}</b>"
+        f"</div>",
         unsafe_allow_html=True,
     )
 
-st.markdown("---")
+st.markdown("</div>", unsafe_allow_html=True)
 
+# --- CORPO DA PÁGINA (LISTA DE NOTÍCIAS QUE FAZ SCROLL) ---
 if todas_as_noticias:
     if municipio_selecionado == "Todos":
         base_noticias = todas_as_noticias
@@ -298,7 +321,7 @@ if todas_as_noticias:
             f"Encontradas {len(noticias_finais)} notícias correspondentes."
         )
 
-    # Renderização limpa em formato de cartões modernos
+    # Renderização dos cartões de notícias
     for entrada in noticias_finais[:limite]:
         titulo = entrada.get("title", "Sem título")
         link = entrada.get("link", "#")
@@ -309,15 +332,14 @@ if todas_as_noticias:
         link_encoded = urllib.parse.quote(link)
         fb_share_url = f"https://www.facebook.com/sharer/sharer.php?u={link_encoded}"
 
-        # HTML estruturado para cada cartão de notícia
         cartao_html = f"""
         <div class="news-card">
             <div class="news-title">{titulo}</div>
             <div class="news-meta">📰 <b>{origem}</b> &nbsp;|&nbsp; 📅 {data}</div>
             <div style="color: #475569; font-size: 0.95rem; margin-bottom: 15px;">{resumo}</div>
-            <div style="display: flex; gap: 15px; align-items: center;">
+            <div style="display: flex; gap: 20px; align-items: center;">
                 <a href="{link}" target="_blank" style="color: #2563eb; text-decoration: none; font-weight: 600; font-size: 0.9rem;">🔗 Ler Artigo Completo</a>
-                <a href="{fb_share_url}" target="_blank" class="fb-btn">📘 Partilhar no Facebook</a>
+                <a href="{fb_share_url}" target="_blank" class="fb-icon-btn" title="Partilhar no Facebook">f</a>
             </div>
         </div>
         """
