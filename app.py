@@ -197,6 +197,11 @@ if "fontes_regionais" not in st.session_state:
         "Notícias de Coimbra / Regional": "https://www.noticiasdecoimbra.pt/feed/",
         "Diário As Beiras": "https://asbeiras.pt/feed/",
         "RTP Centro": "https://www.rtp.pt/noticias/rss/pais/centro",
+	"Diário de Coimbra": "https://www.diariodecoimbra.pt",
+	"Portal Beira": "https://www.beira.pt",
+	"Região de Coimbra no Sapo": "https://www.regiaodecoimbra.sapo.pt",
+	"Diário de Aveiro": "https://www.diarioaveiro.pt",
+	"Centro TV": "https://www.centrotv.sapo.pt",
     }
 
 # --- BARRA LATERAL ---
