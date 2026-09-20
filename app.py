@@ -101,7 +101,6 @@ categorias_keywords = {
 }
 
 # --- GESTÃO DE ESTADO PARA AS FONTES RSS ---
-# Utiliza o session_state do Streamlit para guardar as fontes adicionadas na sessão
 if "fontes_regionais" not in st.session_state:
     st.session_state.fontes_regionais = {
         "Notícias de Coimbra / Regional": "https://www.noticiasdecoimbra.pt/feed/",
@@ -112,7 +111,6 @@ if "fontes_regionais" not in st.session_state:
 # --- BARRA LATERAL ---
 st.sidebar.header("⚙️ Configurações e Filtros")
 
-# Secção para Adicionar Nova Fonte RSS de forma fácil
 with st.sidebar.expander("➕ Adicionar Nova Fonte RSS"):
     novo_nome = st.text_input("Nome da Fonte (ex: Jornal Local)")
     novo_url = st.text_input("URL do Feed RSS (ex: https://...)")
@@ -134,7 +132,6 @@ categoria_selecionada = st.sidebar.selectbox(
     "2. Escolha a Categoria:", ["Todas"] + sorted(list(categorias_keywords.keys()))
 )
 
-# Seleção baseada nas fontes disponíveis (incluindo as adicionadas pelo utilizador)
 fonte_escolhida = st.sidebar.selectbox(
     "Fonte de Notícias:", list(st.session_state.fontes_regionais.keys())
 )
@@ -142,7 +139,6 @@ url_rss = st.session_state.fontes_regionais[fonte_escolhida]
 limite = st.sidebar.slider("Número máximo de notícias:", 3, 20, 5)
 
 
-# Função para carregar feeds com cache
 @st.cache_data(ttl=600)
 def carregar_rss(url):
     return feedparser.parse(url)
@@ -154,11 +150,10 @@ feed = carregar_rss(url_rss)
 st.subheader(
     f"Resultados para: {municipio_selecionado} | Categoria: {categoria_selecionada}"
 )
-st.markdown(f"**Fonte ativa:** {fonte_escolhida} (`{url_rss}`)_")
+st.markdown(f"_**Fonte ativa:** {fonte_escolhida} (`{url_rss}`)_")
 st.markdown("---")
 
 if feed.entries:
-    # Passo 1: Filtrar por Município
     filtrados_municipio = [
         entry
         for entry in feed.entries
@@ -170,7 +165,6 @@ if feed.entries:
         filtrados_municipio if filtrados_municipio else feed.entries
     )
 
-    # Passo 2: Filtrar por Categoria
     if categoria_selecionada != "Todas":
         palavras_chave = categorias_keywords[categoria_selecionada]
         noticias_finais = []
@@ -193,7 +187,6 @@ if feed.entries:
             f"Encontradas {len(noticias_finais)} notícias correspondentes."
         )
 
-    # Renderizar cartões de notícias com botão de partilha
     for entrada in noticias_finais[:limite]:
         titulo = entrada.get("title", "Sem título")
         link = entrada.get("link", "#")
@@ -205,7 +198,6 @@ if feed.entries:
             st.caption(f"📅 Publicado a: {data}")
             st.write(resumo, unsafe_allow_html=True)
 
-            # Link estruturado para partilha no Facebook
             link_encoded = urllib.parse.quote(link)
             fb_share_url = f"https://www.facebook.com/sharer/sharer.php?u={link_encoded}"
 
