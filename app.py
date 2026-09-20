@@ -4,16 +4,26 @@ import streamlit as st
 
 # Configuração da página
 st.set_page_config(
-    page_title="Agregador Cultural e Municipal", page_icon="🗺️", layout="wide"
+    page_title="Agenda Beira Litoral", page_icon="🗺️", layout="wide"
 )
 
-st.title("🗺️ Agregador de Notícias Municipais, Cultura e Eventos")
-st.write(
-    "Filtre a atualidade por concelho e categoria, com gestão dinâmica de fontes RSS."
-)
+# --- LOGOTIPO NO TOPO ---
+# Certifique-se de que o ficheiro com o logotipo está guardado como 'logo.png' na pasta do repositório
+try:
+    st.image(
+        "logo.png", use_container_width=True
+    )  # Exibe o logotipo a ocupar a largura principal
+except Exception:
+    # Fallback caso o ficheiro ainda não tenha sido enviado para o GitHub
+    st.title("agenda beiralitoral")
+    st.warning(
+        "⚠️ Coloque a imagem do logotipo com o nome 'logo.png' na pasta do repositório para o visualizar aqui."
+    )
 
-# 1. Lista de Municípios
-municipios = [
+st.markdown("---")
+
+# 1. Lista base de Municípios
+municipios_lista = [
     "Águeda",
     "Albergaria-a-Velha",
     "Alvaiázere",
@@ -53,6 +63,8 @@ municipios = [
     "Vale de Cambra",
     "Vila Nova de Poiares",
 ]
+
+municipios = ["Todos"] + sorted(municipios_lista)
 
 # 2. Categorias e palavras-chave associadas
 categorias_keywords = {
@@ -109,7 +121,7 @@ if "fontes_regionais" not in st.session_state:
     }
 
 # --- BARRA LATERAL ---
-st.sidebar.header("⚙️ Configurações e Filtros")
+st.sidebar.header("⚙️ Gestão de Fontes e Filtros")
 
 with st.sidebar.expander("➕ Adicionar Nova Fonte RSS"):
     novo_nome = st.text_input("Nome da Fonte (ex: Jornal Local)")
@@ -126,17 +138,12 @@ st.sidebar.markdown("---")
 st.sidebar.header("Filtros de Pesquisa")
 
 municipio_selecionado = st.sidebar.selectbox(
-    "1. Escolha o Concelho:", sorted(municipios)
+    "1. Escolha o Concelho:", municipios
 )
 categoria_selecionada = st.sidebar.selectbox(
     "2. Escolha a Categoria:", ["Todas"] + sorted(list(categorias_keywords.keys()))
 )
-
-fonte_escolhida = st.sidebar.selectbox(
-    "Fonte de Notícias:", list(st.session_state.fontes_regionais.keys())
-)
-url_rss = st.session_state.fontes_regionais[fonte_escolhida]
-limite = st.sidebar.slider("Número máximo de notícias:", 3, 20, 5)
+limite = st.sidebar.slider("Número máximo de notícias a exibir:", 3, 30, 10)
 
 
 @st.cache_data(ttl=600)
@@ -144,26 +151,33 @@ def carregar_rss(url):
     return feedparser.parse(url)
 
 
-feed = carregar_rss(url_rss)
+# --- RECOLHA AUTOMÁTICA DE TODAS AS FONTES ---
+todas_as_noticias = []
+for nome_fonte, url_fonte in st.session_state.fontes_regionais.items():
+    feed = carregar_rss(url_fonte)
+    for entrada in feed.entries:
+        entrada["fonte_origem"] = nome_fonte
+        todas_as_noticias.append(entrada)
 
 # --- CORPO DA PÁGINA ---
 st.subheader(
-    f"Resultados para: {municipio_selecionado} | Categoria: {categoria_selecionada}"
+    f"Resultados para Concelho: {municipio_selecionado} | Categoria: {categoria_selecionada}"
 )
-st.markdown(f"_**Fonte ativa:** {fonte_escolhida} (`{url_rss}`)_")
+st.markdown(
+    f"_A recolher automaticamente de **{len(st.session_state.fontes_regionais)}** fontes configuradas._"
+)
 st.markdown("---")
 
-if feed.entries:
-    filtrados_municipio = [
-        entry
-        for entry in feed.entries
-        if municipio_selecionado.lower() in entry.get("title", "").lower()
-        or municipio_selecionado.lower() in entry.get("summary", "").lower()
-    ]
-
-    base_noticias = (
-        filtrados_municipio if filtrados_municipio else feed.entries
-    )
+if todas_as_noticias:
+    if municipio_selecionado == "Todos":
+        base_noticias = todas_as_noticias
+    else:
+        base_noticias = [
+            entry
+            for entry in todas_as_noticias
+            if municipio_selecionado.lower() in entry.get("title", "").lower()
+            or municipio_selecionado.lower() in entry.get("summary", "").lower()
+        ]
 
     if categoria_selecionada != "Todas":
         palavras_chave = categorias_keywords[categoria_selecionada]
@@ -179,9 +193,9 @@ if feed.entries:
 
     if not noticias_finais:
         st.info(
-            f"Não foram encontradas notícias específicas para **{municipio_selecionado}** na categoria **{categoria_selecionada}**."
+            f"Não foram encontradas notícias para **{municipio_selecionado}** na categoria **{categoria_selecionada}** nas fontes atuais."
         )
-        noticias_finais = feed.entries[:limite]
+        noticias_finais = todas_as_noticias[:limite]
     else:
         st.success(
             f"Encontradas {len(noticias_finais)} notícias correspondentes."
@@ -192,10 +206,13 @@ if feed.entries:
         link = entrada.get("link", "#")
         data = entrada.get("published", "Data indisponível")
         resumo = entrada.get("summary", "Sem resumo disponível.")
+        origem = entrada.get("fonte_origem", "Fonte desconhecida")
 
         with st.container():
             st.subheader(titulo)
-            st.caption(f"📅 Publicado a: {data}")
+            st.caption(
+                f"📰 **Origem:** {origem} &nbsp;|&nbsp; 📅 **Publicado a:** {data}"
+            )
             st.write(resumo, unsafe_allow_html=True)
 
             link_encoded = urllib.parse.quote(link)
@@ -212,6 +229,4 @@ if feed.entries:
 
             st.markdown("---")
 else:
-    st.warning(
-        "Não foi possível estabelecer ligação à fonte de notícias selecionada ou o feed está vazio."
-    )
+    st.warning("Não foi possível carregar notícias de nenhuma das fontes ativas.")
