@@ -85,6 +85,8 @@ st.markdown(
         font-size: 1.1rem;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         transition: background-color 0.2s ease, transform 0.2s ease;
+        border: none;
+        cursor: pointer;
     }
     .fb-icon-btn:hover {
         background-color: #166fe5;
@@ -238,7 +240,8 @@ municipio_selecionado = st.sidebar.selectbox(
 categoria_selecionada = st.sidebar.selectbox(
     "Escolha a Categoria:", ["Todas"] + sorted(list(categorias_keywords.keys()))
 )
-limite = st.sidebar.slider("Número máximo de notícias a exibir:", 3, 30, 10)
+# Limite máximo aumentado para 100
+limite = st.sidebar.slider("Número máximo de notícias a exibir:", 3, 100, 10)
 
 
 @st.cache_data(ttl=600)
@@ -313,18 +316,18 @@ if todas_as_noticias:
             f"Encontradas {len(noticias_finais)} notícias correspondentes."
         )
 
-    # Renderização dos cartões de notícias com hashtag integrada no partilhar
-    for entrada in noticias_finais[:limite]:
-        titulo = entrada.get("title", "Sem título")
+    # Renderização dos cartões de notícias até ao limite escolhido (máx. 100)
+    for i, entrada in enumerate(noticias_finais[:limite]):
+        titulo = entrada.get("title", "Sem título").replace('"', "'")
         link = entrada.get("link", "#")
         data = entrada.get("published", "Data indisponível")
         resumo = entrada.get("summary", "Sem resumo disponível.")
         origem = entrada.get("fonte_origem", "Fonte desconhecida")
 
-        # Inclusão da hashtag no URL de partilha do Facebook
         link_encoded = urllib.parse.quote(link)
-        hashtag_text = urllib.parse.quote(" #agendabeiralitoral")
-        fb_share_url = f"https://www.facebook.com/sharer/sharer.php?u={link_encoded}&quote={hashtag_text}"
+        fb_share_url = f"https://www.facebook.com/sharer/sharer.php?u={link_encoded}"
+        
+        texto_copiar = f"{titulo} - {link} #agendabeiralitoral"
 
         cartao_html = f"""
         <div class="news-card">
@@ -333,7 +336,10 @@ if todas_as_noticias:
             <div style="color: #475569; font-size: 0.95rem; margin-bottom: 15px;">{resumo}</div>
             <div style="display: flex; gap: 20px; align-items: center;">
                 <a href="{link}" target="_blank" style="color: #2563eb; text-decoration: none; font-weight: 600; font-size: 0.9rem;">🔗 Ler Artigo Completo</a>
-                <a href="{fb_share_url}" target="_blank" class="fb-icon-btn" title="Partilhar no Facebook">f</a>
+                <button class="fb-icon-btn" onclick="
+                    navigator.clipboard.writeText(`{texto_copiar}`);
+                    window.open('{fb_share_url}', '_blank');
+                " title="Partilhar no Facebook (A hashtag é copiada para colar automaticamente)">f</button>
             </div>
         </div>
         """
