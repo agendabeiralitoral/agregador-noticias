@@ -2,21 +2,95 @@ import urllib.parse
 import feedparser
 import streamlit as st
 
-# Configuração da página
+# Configuração da página e layout
 st.set_page_config(
-    page_title="Agenda Beira Litoral", page_icon="🗺️", layout="wide"
+    page_title="Agenda Beira Litoral",
+    page_icon="🗺️",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+# --- MELHORIAS DE DESIGN (CSS CUSTOMIZADO) ---
+st.markdown(
+    """
+    <style>
+    /* Estilo global e fontes */
+    .main {
+        background-color: #f8f9fa;
+    }
+    
+    /* Cartões de notícias modernos */
+    .news-card {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        margin-bottom: 20px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .news-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        border-color: #cbd5e1;
+    }
+    
+    /* Títulos dos artigos */
+    .news-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 8px;
+    }
+    
+    /* Metadados */
+    .news-meta {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin-bottom: 12px;
+    }
+    
+    /* Botão personalizado do Facebook */
+    .fb-btn {
+        background-color: #1877F2;
+        color: white;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: none;
+        cursor: pointer;
+    }
+    .fb-btn:hover {
+        background-color: #166fe5;
+        color: white;
+    }
+    
+    /* Ajustes na barra lateral */
+    [data-testid="stSidebar"] {
+        background-color: #f1f5f9;
+        border-right: 1px solid #e2e8f0;
+    }
+    </style>
+""",
+    unsafe_allow_html=True,
 )
 
 # --- LOGOTIPO NO TOPO ---
-try:
-    st.image("logo.png", use_container_width=True)
-except Exception:
-    st.title("agenda beiralitoral")
-    st.warning(
-        "⚠️ Coloque a imagem do logotipo com o nome 'logo.png' na pasta do repositório."
-    )
+col_logo1, col_logo2, col_logo3 = st.columns([1, 4, 1])
+with col_logo2:
+    try:
+        st.image("logo.png", use_container_width=True)
+    except Exception:
+        st.title("agenda beiralitoral")
+        st.warning(
+            "⚠️ Coloque a imagem do logotipo com o nome 'logo.png' na pasta do repositório."
+        )
 
-st.markdown("---")
+st.markdown("<br>", unsafe_allow_html=True)
 
 # 1. Lista base de Municípios
 municipios_lista = [
@@ -117,15 +191,17 @@ if "fontes_regionais" not in st.session_state:
     }
 
 # --- BARRA LATERAL ---
-st.sidebar.header("⚙️ Gestão de Fontes e Filtros")
+st.sidebar.markdown(
+    "### 🎛️ Painel de Controlo", help="Filtros e Gestão de Fontes"
+)
 
 # 1. Secção para CONSULTAR e GERIR as fontes configuradas
-with st.sidebar.expander("📋 Consultar Fontes Configuradas"):
+with st.sidebar.expander("📋 Fontes RSS Configuradas"):
     if st.session_state.fontes_regionais:
         for nome, url in list(st.session_state.fontes_regionais.items()):
             st.markdown(f"**{nome}**")
             st.code(url, language="text")
-            if st.button(f"Remover '{nome}'", key=f"btn_rem_{nome}"):
+            if st.button(f"🗑️ Remover '{nome}'", key=f"btn_rem_{nome}"):
                 del st.session_state.fontes_regionais[nome]
                 st.rerun()
             st.markdown("---")
@@ -137,7 +213,7 @@ with st.sidebar.expander("➕ Adicionar Nova Fonte RSS"):
     novo_nome = st.text_input("Nome da Fonte (ex: Jornal Local)")
     novo_url = st.text_input("URL do Feed RSS (ex: https://...)")
 
-    if st.button("Guardar Fonte"):
+    if st.button("Guardar Nova Fonte"):
         if novo_nome and novo_url:
             st.session_state.fontes_regionais[novo_nome] = novo_url
             st.success(f"Fonte '{novo_nome}' adicionada com sucesso!")
@@ -146,13 +222,13 @@ with st.sidebar.expander("➕ Adicionar Nova Fonte RSS"):
             st.warning("Por favor, preencha o nome e o URL.")
 
 st.sidebar.markdown("---")
-st.sidebar.header("Filtros de Pesquisa")
+st.sidebar.markdown("### 🔍 Filtros de Pesquisa")
 
 municipio_selecionado = st.sidebar.selectbox(
-    "1. Escolha o Concelho:", municipios
+    "Escolha o Concelho:", municipios
 )
 categoria_selecionada = st.sidebar.selectbox(
-    "2. Escolha a Categoria:", ["Todas"] + sorted(list(categorias_keywords.keys()))
+    "Escolha a Categoria:", ["Todas"] + sorted(list(categorias_keywords.keys()))
 )
 limite = st.sidebar.slider("Número máximo de notícias a exibir:", 3, 30, 10)
 
@@ -172,16 +248,21 @@ for nome_fonte, url_fonte in st.session_state.fontes_regionais.items():
                 entrada["fonte_origem"] = nome_fonte
                 todas_as_noticias.append(entrada)
     except Exception:
-        # Se uma fonte falhar, ignora-a e continua a carregar as outras
         continue
 
 # --- CORPO DA PÁGINA ---
-st.subheader(
-    f"Resultados para Concelho: {municipio_selecionado} | Categoria: {categoria_selecionada}"
-)
-st.markdown(
-    f"_A recolher automaticamente de **{len(st.session_state.fontes_regionais)}** fontes configuradas._"
-)
+col_info1, col_info2 = st.columns([3, 1])
+with col_info1:
+    st.markdown(
+        f"#### Filtro ativo: <span style='color:#2563eb;'>{municipio_selecionado}</span> | Categoria: <span style='color:#2563eb;'>{categoria_selecionada}</span>",
+        unsafe_allow_html=True,
+    )
+with col_info2:
+    st.markdown(
+        f"<div style='text-align: right; color: #64748b; font-size: 0.9rem;'>Fontes ativas: <b>{len(st.session_state.fontes_regionais)}</b></div>",
+        unsafe_allow_html=True,
+    )
+
 st.markdown("---")
 
 if todas_as_noticias:
@@ -217,6 +298,7 @@ if todas_as_noticias:
             f"Encontradas {len(noticias_finais)} notícias correspondentes."
         )
 
+    # Renderização limpa em formato de cartões modernos
     for entrada in noticias_finais[:limite]:
         titulo = entrada.get("title", "Sem título")
         link = entrada.get("link", "#")
@@ -224,25 +306,21 @@ if todas_as_noticias:
         resumo = entrada.get("summary", "Sem resumo disponível.")
         origem = entrada.get("fonte_origem", "Fonte desconhecida")
 
-        with st.container():
-            st.subheader(titulo)
-            st.caption(
-                f"📰 **Origem:** {origem} &nbsp;|&nbsp; 📅 **Publicado a:** {data}"
-            )
-            st.write(resumo, unsafe_allow_html=True)
+        link_encoded = urllib.parse.quote(link)
+        fb_share_url = f"https://www.facebook.com/sharer/sharer.php?u={link_encoded}"
 
-            link_encoded = urllib.parse.quote(link)
-            fb_share_url = f"https://www.facebook.com/sharer/sharer.php?u={link_encoded}"
-
-            col1, col2, _ = st.columns([2, 2, 6])
-            with col1:
-                st.markdown(f"[🔗 Ler Artigo Completo]({link})")
-            with col2:
-                st.markdown(
-                    f'<a href="{fb_share_url}" target="_blank" style="text-decoration:none;"><button style="background-color:#1877F2; color:white; border:none; padding:8px 16px; border-radius:4px; font-weight:bold; cursor:pointer;">📘 Partilhar no Facebook</button></a>',
-                    unsafe_allow_html=True,
-                )
-
-            st.markdown("---")
+        # HTML estruturado para cada cartão de notícia
+        cartao_html = f"""
+        <div class="news-card">
+            <div class="news-title">{titulo}</div>
+            <div class="news-meta">📰 <b>{origem}</b> &nbsp;|&nbsp; 📅 {data}</div>
+            <div style="color: #475569; font-size: 0.95rem; margin-bottom: 15px;">{resumo}</div>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <a href="{link}" target="_blank" style="color: #2563eb; text-decoration: none; font-weight: 600; font-size: 0.9rem;">🔗 Ler Artigo Completo</a>
+                <a href="{fb_share_url}" target="_blank" class="fb-btn">📘 Partilhar no Facebook</a>
+            </div>
+        </div>
+        """
+        st.markdown(cartao_html, unsafe_allow_html=True)
 else:
     st.warning("Não foi possível carregar notícias de nenhuma das fontes ativas.")
