@@ -313,7 +313,7 @@ if todas_as_noticias:
             f"Encontradas {len(noticias_finais)} notícias correspondentes."
         )
 
-    # Renderização dos cartões de notícias
+    # Renderização dos cartões de notícias com hashtag integrada no partilhar
     for entrada in noticias_finais[:limite]:
         titulo = entrada.get("title", "Sem título")
         link = entrada.get("link", "#")
@@ -321,8 +321,10 @@ if todas_as_noticias:
         resumo = entrada.get("summary", "Sem resumo disponível.")
         origem = entrada.get("fonte_origem", "Fonte desconhecida")
 
+        # Inclusão da hashtag no URL de partilha do Facebook
         link_encoded = urllib.parse.quote(link)
-        fb_share_url = f"https://www.facebook.com/sharer/sharer.php?u={link_encoded}"
+        hashtag_text = urllib.parse.quote(" #agendabeiralitoral")
+        fb_share_url = f"https://www.facebook.com/sharer/sharer.php?u={link_encoded}&quote={hashtag_text}"
 
         cartao_html = f"""
         <div class="news-card">
