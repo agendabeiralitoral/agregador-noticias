@@ -11,7 +11,7 @@ st.set_page_config(
 try:
     st.image("logo.png", use_container_width=True)
 except Exception:
-    st.title("agenda beiralitoral")
+    st.title("agenda beira litoral")
     st.warning(
         "⚠️ Coloque a imagem do logotipo com o nome 'logo.png' na pasta do repositório."
     )
@@ -125,7 +125,6 @@ with st.sidebar.expander("📋 Consultar Fontes Configuradas"):
         for nome, url in list(st.session_state.fontes_regionais.items()):
             st.markdown(f"**{nome}**")
             st.code(url, language="text")
-            # Botão opcional para remover alguma fonte se desejar
             if st.button(f"Remover '{nome}'", key=f"btn_rem_{nome}"):
                 del st.session_state.fontes_regionais[nome]
                 st.rerun()
@@ -220,25 +219,25 @@ if todas_as_noticias:
         resumo = entrada.get("summary", "Sem resumo disponível.")
         origem = entrada.get("fonte_origem", "Fonte desconhecida")
 
-with st.container():
-    st.subheader(titulo)
-    st.caption(
-        f"📰 **Origem:** {origem} &nbsp;|&nbsp; 📅 **Publicado a:** {data}"
-    )
-    st.write(resumo, unsafe_allow_html=True)
+        with st.container():
+            st.subheader(titulo)
+            st.caption(
+                f"📰 **Origem:** {origem} &nbsp;|&nbsp; 📅 **Publicado a:** {data}"
+            )
+            st.write(resumo, unsafe_allow_html=True)
 
-    link_encoded = urllib.parse.quote(link)
-    fb_share_url = f"https://www.facebook.com/sharer/sharer.php?u={link_encoded}"
+            link_encoded = urllib.parse.quote(link)
+            fb_share_url = f"https://www.facebook.com/sharer/sharer.php?u={link_encoded}"
 
-    col1, col2, _ = st.columns([2, 2, 6])
-    with col1:
-        st.markdown(f"[🔗 Ler Artigo Completo]({link})")
-    with col2:
-        st.markdown(
-            f'<a href="{fb_share_url}" target="_blank" style="text-decoration:none;"><button style="background-color:#1877F2; color:white; border:none; padding:8px 16px; border-radius:4px; font-weight:bold; cursor:pointer;">📘 Partilhar no Facebook</button></a>',
-            unsafe_allow_html=True,
-        )
+            col1, col2, _ = st.columns([2, 2, 6])
+            with col1:
+                st.markdown(f"[🔗 Ler Artigo Completo]({link})")
+            with col2:
+                st.markdown(
+                    f'<a href="{fb_share_url}" target="_blank" style="text-decoration:none;"><button style="background-color:#1877F2; color:white; border:none; padding:8px 16px; border-radius:4px; font-weight:bold; cursor:pointer;">📘 Partilhar no Facebook</button></a>',
+                    unsafe_allow_html=True,
+                )
 
-    st.markdown("---")
+            st.markdown("---")
 else:
     st.warning("Não foi possível carregar notícias de nenhuma das fontes ativas.")
